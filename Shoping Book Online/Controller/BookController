@@ -1,0 +1,153 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using OnlineShopBooks.DAL;
+using OnlineShopBooks.Models;
+
+namespace OnlineShopBooks.Controllers
+{
+	[Authorize]
+	public class BookController : Controller
+    {
+		private readonly StoreContext _context = new StoreContext();
+
+        // GET: Book
+        public ActionResult Index(string sort)
+        {
+	        IEnumerable<Book> books;
+
+	        ViewBag.SortOrderTitle = sort == null || sort == "TitleDesc" ? "TitleAsc" : "TitleDesc";
+	        ViewBag.SortOrderPrice = sort == null || sort == "PriceDesc" ? "PriceAsc" : "PriceDesc";
+
+	        switch (sort)
+	        {
+				case "TitleAsc":
+					books = _context.Books.OrderBy(b => b.Title);
+					break;
+
+				case "TitleDesc":
+					books = _context.Books.OrderByDescending(b => b.Title);
+					break;
+
+				case "PriceAsc":
+					books = _context.Books.OrderBy(b => b.Price);
+					break;
+
+				case "PriceDesc":
+					books = _context.Books.OrderByDescending(b => b.Price);
+					break;
+
+				default:
+					books = _context.Books;
+					break;
+	        }
+
+            return View(books);
+        }
+
+        // GET: Book/Details/5
+        public ActionResult Details(int id)
+        {
+	        var book = _context.Books.FirstOrDefault(b => b.Id == id);
+	        return book == null ? View("Error") : View(book);
+        }
+
+		// GET: Book/Create
+		[Authorize(Roles = "Admin")]
+		public ActionResult Create()
+        {
+            return View();
+        }
+
+		// POST: Book/Create
+		[Authorize(Roles = "Admin")]
+		[HttpPost]
+        public ActionResult Create(FormCollection collection)
+        {
+            try
+            {
+                var book = new Book(
+	                collection["Title"], collection["Author"], collection["Description"],
+	                int.Parse(collection["Pages"]), int.Parse(collection["Price"]), int.Parse(collection["Count"])
+	                );
+
+                _context.Books.Add(book);
+                _context.SaveChanges();
+
+                return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+		[Authorize(Roles = "Admin")]
+		// GET: Book/Edit/5
+		public ActionResult Edit(int id)
+        {
+	        var book = _context.Books.FirstOrDefault(b => b.Id == id);
+	        return book == null ? View("Error") : View(book);
+		}
+
+		// POST: Book/Edit/5
+		[Authorize(Roles = "Admin")]
+		[HttpPost]
+        public ActionResult Edit(int id, FormCollection collection)
+        {
+            try
+            {
+	            var book = _context.Books.FirstOrDefault(b => b.Id == id);
+	            if (book == null)
+		            return View("Error");
+
+	            book.Title = collection["Title"];
+	            book.Author = collection["Author"];
+	            book.Description = collection["Description"];
+	            book.Pages = int.Parse(collection["Pages"]);
+	            book.Price = int.Parse(collection["Price"]);
+	            book.Count = int.Parse(collection["Count"]);
+
+	            _context.SaveChanges();
+
+				return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+		// GET: Book/Delete/5
+		[Authorize(Roles = "Admin")]
+		public ActionResult Delete(int id)
+        {
+	        var book = _context.Books.FirstOrDefault(b => b.Id == id);
+	        return book == null ? View("Error") : View(book);
+		}
+
+        // POST: Book/Delete/5
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+		public ActionResult Delete(int id, FormCollection collection)
+        {
+            try
+            {
+	            var book = _context.Books.FirstOrDefault(b => b.Id == id);
+	            if (book == null)
+		            return View("Error");
+
+	            _context.Books.Remove(book);
+	            _context.SaveChanges();
+
+				return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+    }
+}
